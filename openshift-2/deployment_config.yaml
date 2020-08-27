@@ -1,0 +1,60 @@
+# %APP_NAME%: DeploymentConfig, OpenShift specific
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: %APP_NAME%-deployment-config
+  labels:
+    app: %APP_NAME%
+    app.kubernetes.io/part-of: %APP_PROJECT%
+spec:
+  replicas: 1
+  selector:
+    name: %APP_NAME%
+  strategy:
+    type: Rolling
+    rollingParams:
+      timeoutSeconds: 60
+#      post:
+#        failurePolicy: Ignore
+#        tagImages:
+#        - containerName: %APP_NAME%
+#          to:
+#            kind: ImageStreamTag
+#            name: %APP_NAME%:latest
+  template:
+    metadata:
+      labels:
+        name: %APP_NAME%
+        app: %APP_NAME%
+        app.kubernetes.io/part-of: %APP_PROJECT%
+    spec:
+      containers:
+      - image: image-registry.openshift-image-registry.svc:5000/%APP_NAMESPACE%/tekton-101:latest
+        imagePullPolicy: Always
+        name: %APP_NAME%
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+        resources:
+          limits:
+            memory: 256Mi
+        env:
+        - name: TEKTON_101_ENV_EXAMPLE
+          value: "Version: %APP_NAME%"
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      volumes:
+      - emptyDir: {}
+        name: vol1
+  triggers:
+  - type: ConfigChange
+#  - type: ImageChange
+#    imageChangeParams:
+#      automatic: true 
+#      from:
+#        kind: "ImageStreamTag"
+#        name: "tekton-101:latest"
+#        namespace: "%APP_NAMESPACE%"
+#      containerNames:
+#        - %APP_NAME%
+status: {}
